@@ -1,26 +1,44 @@
 package com.mimari.springbootdemo.service;
 
+import com.mimari.springbootdemo.domain.User;
+import com.mimari.springbootdemo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-// --- YENİ KISIMLAR ---
-// 1. @Service: Bu da @Component gibidir, ancak "İş Mantığı Servisi"
-//    olduğunu belirtir. Spring bunu da bulup 'Bean' yapacak.
+
 @Service
-// 2. @RequiredArgsConstructor: Bu LOMBOK'tan gelir.
-//    Aşağıdaki 'final' olarak işaretlenmiş 'notificationService'
-//    alanını alıp, bizim 'spring-core-basics' projemizde
-//    MANUEL YAZDIĞIMIZ 'public UserService(NotificationService ns) { ... }'
-//    constructor'ını OTOMATİK olarak yaratır.
 @RequiredArgsConstructor
 public class UserService {
 
-    // 3. Bağımlılığı 'final' olarak tanımlıyoruz (Constructor Injection için).
+    // 1. ESKİ BAĞIMLILIK (Hala geçerli)
     private final NotificationService notificationService;
 
-    public void registerUser(String username) {
-        System.out.println(username+" veritabanına kaydediliyor...");
+    // 2. YENİ BAĞIMLILIK (Veri Katmanı)
+    //    Lombok, bunu gördüğü an constructor'a bunu da ekler.
+    //    Spring Boot, JpaRepository'nin somut uygulamasını bulup
+    //    buraya OTOMATİK enjekte eder.
+    private final UserRepository userRepository;
 
+    // 3. 'registerUser' METODUNU GÜNCELLEME
+    public void registerUser(String username) {
+
+        // 4. "YALAN" SİLİNDİ
+        // System.out.println(username + " veritabanına kaydediliyor..."); // <-- SİLDİK
+
+        // 5. "GERÇEK" GELDİ (Aşama 3A: Nesneyi Yarat)
+        //    Gelen 'username' (String) verisinden bir 'User' (Entity) nesnesi yaratıyoruz.
+        //    (Constructor'da 'username'i 'name' alanına atamıştık)
+        User userToSave = new User(username);
+
+        // 6. "GERÇEK" GELDİ (Aşama 3B: Kaydet)
+        //    Enjekte edilen repository'nin 'save' metodunu çağırıyoruz.
+        //    Spring Data JPA, bu komutu arka planda H2 veritabanı için
+        //    'INSERT INTO users (name) VALUES (?)' SQL'ine çevirir.
+        userRepository.save(userToSave);
+
+        // 7. İŞ AKIŞI DEVAM EDİYOR
+        //    Kayıt işlemi BAŞARILI olduktan sonra (hata fırlatmazsa)
+        //    bildirim gönderiyoruz.
         notificationService.sendNotification(username);
     }
 }
