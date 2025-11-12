@@ -36,6 +36,10 @@ public class SecurityConfig {
                         // H2 Konsolu (ve tüm alt yolları) herkese açık
                         .requestMatchers("/h2-console/**").permitAll()
 
+                        // (YENİ): Spring Boot Hata Sayfası (/error) herkese açık
+                        // Bu, 401 hatası yerine GERÇEK 500/404 hatalarını görmemizi sağlar.
+                        .requestMatchers("/error").permitAll()
+
                         // 2. ESKİ YAKALAMA KURALI (Fallback):
                         //    "...dışındaki GERİ KALAN TÜM İSTEKLER (anyRequest)..."
                         .anyRequest().authenticated() // "...Kimlik Doğrulaması (Authenticated) zorunludur."
@@ -75,7 +79,7 @@ public class SecurityConfig {
                 .password(passwordEncoder.encode("admin100"))
                 .roles("ADMIN","USER") // kullanıcıya roller atıyoruz
                 .build();
-        
+
         // Bu hafıza-içi kullanıcı yöneticisini Spring'e Bean olarak veriyoruz.
         return new InMemoryUserDetailsManager(admin);
     }
