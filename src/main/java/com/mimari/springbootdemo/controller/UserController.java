@@ -33,6 +33,6 @@ public class UserController {
         // 3. BAŞARI CEVABI:
         //    Cevap olarak artık 'username'i değil,
         //    DTO'dan gelen 'email'i dönelim (daha mantıklı).
-        return request.getEmail() + " başarıyla kaydedildi.";
+        return request.getEmail() + " başarı ile kaydedildi.";
     }
 }
