@@ -2,6 +2,7 @@ package com.mimari.springbootdemo.service;
 
 import com.mimari.springbootdemo.domain.User;
 import com.mimari.springbootdemo.dto.RegisterRequestDTO;
+import com.mimari.springbootdemo.mapper.UserMapper;
 import com.mimari.springbootdemo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,44 +13,39 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserService {
 
-    // 1. ESKİ BAĞIMLILIK (Hala geçerli)
+    // 1. Mevcut Bağımlılıklar
     private final NotificationService notificationService;
     private final UserRepository userRepository;
-
-    // 3. YENİ BAĞIMLILIK: PASSWORD ENCODER
-    //    SecurityConfig'de yarattığımız 'passwordEncoder' Bean'ini
-    //    buraya enjekte ediyoruz.
     private final PasswordEncoder passwordEncoder;
 
-    // --- METOT İMZASI GÜNCELLENDİ ---
-    // Artık 'String username' DEĞİL, 'RegisterRequestDTO request' alıyor.
+    // 2. YENİ BAĞIMLILIK (MapStruct'ın ürettiği Bean)
+    //    Spring, 'UserMapperImpl' sınıfını bulup buraya enjekte edecek.
+    private final UserMapper userMapper;
+
     public void registerUser(RegisterRequestDTO request) {
 
-        // --- MİMARİ GÜVENLİK ADIMI (DTO -> ENTITY MAPPING) ---
-        // Bu, "Mass Assignment" saldırısını engellediğimiz yerdir.
-        // DTO'dan Entity'ye manuel ve GÜVENLİ dönüştürme yapıyoruz.
-        User userToSave = new User();
+        // --- BÖLÜM 1: OTOMATİK DÖNÜŞÜM (YENİ YÖNTEM) ---
+        // 'UserMapper' arayüzümüzdeki 'dtoToEntity' metodunu çağırıyoruz.
+        // MapStruct'ın ürettiği kod, DTO'yu Entity'ye dönüştürür.
+        // (name, email alanlarını eşler, 'password'ü 'ignore' eder)
+        User userToSave = userMapper.dtoToEntity(request);
 
-        // 1. Sadece GÜVENDİĞİMİZ alanları DTO'dan Entity'ye aktarırız:
-        userToSave.setName(request.getName());
-        userToSave.setEmail(request.getEmail());
+        // --- "ANGARYA" KOD SİLİNDİ ---
+        // User userToSave = new User();
+        // userToSave.setName(request.getName());
+        // userToSave.setEmail(request.getEmail());
+        // --- "ANGARYA" KOD SİLİNDİ ---
 
-        // 2. PAROLA HASHLEME:
-        //    DTO'dan gelen DÜZ METİN parolayı ASLA kaydetmeyiz.
-        //    'passwordEncoder' kullanarak onu HASH'leriz (örn: $2a$10$...).
+
+        // --- BÖLÜM 2: MANUEL İŞLEM (Hala Gerekli) ---
+        // 'password'ü 'ignore = true' yaptığımız için,
+        // hash'leme işini hala GÜVENLİ bir şekilde manuel yapıyoruz.
+        // Bu, MapStruct'ın otomasyonunu, mimari güvenlikle
+        // birleştirmenin mükemmel bir örneğidir.
         userToSave.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        // 'isAdmin' gibi bir alan DTO'da olsa bile, onu buraya
-        // aktarmadığımız için ASLA veritabanına gidemez.
-        // --- GÜVENLİK ADIMI TAMAMLANDI ---
-
-        // 3. GERÇEK KAYIT İŞLEMİ:
-        //    Artık GÜVENLİ olan 'userToSave' Entity'mizi kaydediyoruz
+        // --- BÖLÜM 3: KAYIT VE BİLDİRİM (Değişmedi) ---
         User savedUser = userRepository.save(userToSave);
-
-        // 4. BİLDİRİM GÖNDERME:
-        //    Artık 'username' (String) yok. Kaydedilen kullanıcının
-        //    ismini (getName()) kullanarak bildirim gönderiyoruz.
         notificationService.sendNotification(savedUser.getName());
     }
 }
