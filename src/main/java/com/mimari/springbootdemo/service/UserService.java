@@ -5,6 +5,7 @@ import com.mimari.springbootdemo.dto.RegisterRequestDTO;
 import com.mimari.springbootdemo.mapper.UserMapper;
 import com.mimari.springbootdemo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

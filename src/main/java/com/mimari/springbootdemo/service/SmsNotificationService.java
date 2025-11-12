@@ -1,6 +1,7 @@
 package com.mimari.springbootdemo.service;
 
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 // --- YENİ KISIM BURASI ---
@@ -10,8 +11,25 @@ import org.springframework.stereotype.Component;
 @Component
 public class SmsNotificationService implements NotificationService {
 
+    // --- YENİ ANOTASYON ---
+    // Spring, @EnableAsync açık olduğu için, bu metodu
+    // ana iş parçacığında DEĞİL, arka plandaki
+    // ayrı bir iş parçacığında (background thread) çalıştıracak.
+    @Async
+    // --- BİTTİ ---
     @Override
     public void sendNotification(String user) {
-        System.out.println("SMS ile bildirim gönderiliyor: "+user+" başarıyla kayıt oldu.");
+
+        // --- YAVAŞLIĞI SİMÜLE ETME ---
+        // Gerçek bir SMS API çağrısının yavaşlığını (network gecikmesi)
+        // simüle etmek için thread'i 2 saniye (2000ms) uyutalım.
+        try {
+            System.out.println(">>> ASYNC: SMS gönderimi başlıyor... (Thread: " + Thread.currentThread().getName() + ")");
+            Thread.sleep(2000); // 2 saniyelik sahte gecikme
+            System.out.println(">>> ASYNC: SMS gönderildi: " + user + " başarıyla kayıt oldu.");
+        } catch (InterruptedException e) {
+            System.err.println(">>> ASYNC: SMS gönderimi kesintiye uğradı.");
+        }
+        // --- SİMÜLASYON BİTTİ ---
     }
 }
